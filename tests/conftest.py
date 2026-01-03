@@ -1,0 +1,46 @@
+# ruff: noqa: E402
+
+from typing import AsyncGenerator
+
+import pytest
+
+from src.api.v1.dependencies.db import get_db_with_null_pool
+from src.config import settings
+from src.db import engine_null_pool
+from src.models import *  # noqa: F403
+from src.models.base import Base
+from src.utils.db_tools import DBHealthChecker, DBManager
+
+
+@pytest.fixture()
+async def db() -> AsyncGenerator[DBManager, None]:
+    async for db in get_db_with_null_pool():
+        yield db
+
+
+@pytest.fixture(scope="module")
+async def db_module() -> AsyncGenerator[DBManager, None]:
+    async for db in get_db_with_null_pool():
+        yield db
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def check_test_mode() -> None:
+    assert settings.app.MODE == "TEST"
+    assert settings.db.DB_NAME == settings.db.DB_NAME_TEST
+
+
+@pytest.fixture()
+async def recreate_tables(db: DBManager) -> None:
+    async with engine_null_pool.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def main(check_test_mode) -> None:
+    await DBHealthChecker(engine=engine_null_pool).check()
+
+    async with engine_null_pool.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
