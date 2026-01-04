@@ -39,6 +39,9 @@ class DBHealthChecker:
             if not is_exists:
                 raise MissingTablesError(detail=missing)
 
+    async def dispose(self):
+        await self.engine.dispose()
+
     def _check_tables_existence(self, conn: Connection) -> tuple[bool, set[str]]:
         inspector = inspect(conn)
         existing_tables = set(inspector.get_table_names())

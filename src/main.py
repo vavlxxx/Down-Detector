@@ -21,10 +21,13 @@ from src.utils.logging import configurate_logging, get_logger
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger = get_logger("src")
 
-    await DBHealthChecker(engine=engine).check()
+    helper = DBHealthChecker(engine=engine)
+    await helper.check()
 
     logger.info("All checks passed!")
     yield
+
+    await helper.dispose()
     logger.info("Shutting down...")
 
 

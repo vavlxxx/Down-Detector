@@ -39,34 +39,6 @@ class ValueOutOfRangeError(ApplicationError):
     detail = "Value out of integer range"
 
 
-class CategoryNotFoundError(ObjectNotFoundError):
-    detail = "Category not found"
-
-
-class CategoryAlreadyExistsError(ObjectAlreadyExistsError):
-    detail = "Category already exists"
-
-
-class CategoryInvalidValueError(ObjectInvalidValueError):
-    detail = "Category has invalid value"
-
-
-class RelatedProductsExistsError(ApplicationError):
-    detail = "Cannot delete category with products"
-
-
-class ProductNotFoundError(ObjectNotFoundError):
-    detail = "Product not found"
-
-
-class ProductAlreadyExistsError(ObjectAlreadyExistsError):
-    detail = "Product already exists"
-
-
-class ProductInvalidValueError(ObjectInvalidValueError):
-    detail = "Product has invalid value"
-
-
 class ApplicationHTTPError(HTTPException):
     detail = "Something went wrong"
     status = status.HTTP_500_INTERNAL_SERVER_ERROR
