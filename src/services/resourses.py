@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import aiohttp
 from fastapi import status
 
+from src.config import settings
 from src.models.resoures import ResourseStatus
 from src.schemas.resoures import ResourseStatusAddDTO
 from src.services.base import BaseService
@@ -16,11 +17,16 @@ logger = get_logger("resources")
 
 class ResourceStatusesService(BaseService):
     async def delete_unrelevant_statuses(self):
-        threshold = datetime.now() - timedelta(hours=24)
+        threshold = datetime.now() - timedelta(
+            hours=settings.taskiq.UNRELEVANT_STATUS_HOURS
+        )
         expression = ResourseStatus.created_at <= threshold
         statuses = await self.db.statuses.get_all_filtered(expression)
         if not statuses:
-            logger.info("There is no unrelevant statuses <= %s hours. Skipping...", 24)
+            logger.info(
+                "There is no unrelevant statuses <= %s hours. Skipping...",
+                settings.taskiq.UNRELEVANT_STATUS_HOURS,
+            )
             return
 
         logger.debug("Found %s unrelevant statuses. Performing deletion", len(statuses))

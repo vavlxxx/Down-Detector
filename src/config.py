@@ -2,9 +2,31 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
+from pydantic_extra_types.cron import CronStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR: Path = Path(__file__).parent.parent
+
+
+class TaskiqConfig(BaseModel):
+    DEFAULT_RETRY_COUNT: int = 1
+    DEFAULT_DELAY: int = 10
+    USE_JITTER: bool = True
+    USE_DELAY_EXPONENT: bool = True
+    MAX_DELAY_EXPONENT: int = 120
+
+    UNRELEVANT_STATUS_HOURS: int = 24
+    CRON_CHECK_RESOURCES: CronStr = CronStr("*/5 * * * *")
+    CRON_CHECK_UNRELEVANT_STATUSES: CronStr = CronStr("*/5 * * * *")
+
+
+class RedisConfig(BaseModel):
+    HOST: str
+    PORT: int
+
+    @property
+    def REDIS_URL(self) -> str:
+        return f"redis://{self.HOST}:{self.PORT}"
 
 
 class DBConfig(BaseModel):
@@ -31,7 +53,9 @@ class DBConfig(BaseModel):
 
     @property
     def DB_URL(self) -> str:
-        url: str = f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        url: str = (
+            f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        )
         return url
 
 
@@ -59,7 +83,9 @@ class GeneralAppConfig(BaseModel):
 
 class Settings(BaseSettings):
     db: DBConfig
+    redis: RedisConfig
     app: GeneralAppConfig
+    taskiq: TaskiqConfig = TaskiqConfig()
     gunicorn: GunicornConfig = GunicornConfig()
     uvicorn: UvicornConfig = UvicornConfig()
 

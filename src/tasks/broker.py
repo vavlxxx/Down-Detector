@@ -3,13 +3,15 @@ from taskiq import SmartRetryMiddleware, TaskiqScheduler
 from taskiq.schedule_sources import LabelScheduleSource
 from taskiq_redis import ListQueueBroker
 
-broker = ListQueueBroker("redis://localhost:7379/0").with_middlewares(
+from src.config import settings
+
+broker = ListQueueBroker(settings.redis.REDIS_URL).with_middlewares(
     SmartRetryMiddleware(
-        default_retry_count=1,
-        default_delay=10,
-        use_jitter=True,
-        use_delay_exponent=True,
-        max_delay_exponent=120,
+        default_retry_count=settings.taskiq.DEFAULT_RETRY_COUNT,
+        default_delay=settings.taskiq.DEFAULT_DELAY,
+        use_jitter=settings.taskiq.USE_JITTER,
+        use_delay_exponent=settings.taskiq.USE_DELAY_EXPONENT,
+        max_delay_exponent=settings.taskiq.MAX_DELAY_EXPONENT,
     ),
 )
 
