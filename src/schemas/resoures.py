@@ -1,10 +1,19 @@
-from pydantic import HttpUrl
+from pydantic import HttpUrl, field_validator
 
 from src.schemas.base import BaseDTO, TimingDTO
 
 
 class ResourceAddDTO(BaseDTO):
-    url: HttpUrl
+    url: str
+
+    @field_validator("url", mode="before")
+    @classmethod
+    def validate_url(cls, value: str) -> str:
+        try:
+            HttpUrl(value)
+        except Exception as exc:
+            raise ValueError from exc
+        return value
 
 
 class ResourceDTO(ResourceAddDTO, TimingDTO):

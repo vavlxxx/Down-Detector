@@ -18,6 +18,44 @@ services:
     command: "poetry run python ./src/gunicorn/run.py"
     volumes:
       - ./logs:/app/logs
+      
+  taskiq_worker:
+    container_name: taskiq_worker
+    image: down_detector:1.0.0
+    env_file:
+      - ".env.docker"
+    networks:
+      - "down_detector_net"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_started
+        
+    command: "poetry run taskiq worker src.tasks.broker:broker src.tasks.worker src.tasks.schedule --workers 3"
+    volumes:
+      - ./logs:/app/logs
+  
+  taskiq_scheduler:
+    container_name: taskiq_scheduler
+    image: down_detector:1.0.0
+    env_file:
+      - ".env.docker"
+    networks:
+      - "down_detector_net"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_started
+        
+    command: "poetry run taskiq scheduler src.tasks.broker:scheduler src.tasks.schedule"
+    volumes:
+      - ./logs:/app/logs
 
     develop:
       watch:

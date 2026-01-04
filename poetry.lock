@@ -417,6 +417,25 @@ files = [
 markers = {main = "platform_system == \"Windows\"", dev = "platform_system == \"Windows\" or sys_platform == \"win32\""}
 
 [[package]]
+name = "cron-converter"
+version = "1.3.1"
+description = "Cron string parser and scheduler for Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "cron_converter-1.3.1-py3-none-any.whl", hash = "sha256:60c645532802e12ad09097091a5ec83a79b9b1064374e89edb0facf2ba36a697"},
+    {file = "cron_converter-1.3.1.tar.gz", hash = "sha256:53eb26be3eb2e0f206a6e227ca0c19b3807b44a24b39f4eda3718703e6474f4a"},
+]
+
+[package.dependencies]
+python-dateutil = "*"
+
+[package.extras]
+mypy = ["mypy", "types-python-dateutil"]
+test = ["pytest", "python-dateutil"]
+
+[[package]]
 name = "fastapi"
 version = "0.116.2"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
@@ -1566,6 +1585,21 @@ pytest = ">=5.0.0"
 python-dotenv = ">=0.9.1"
 
 [[package]]
+name = "python-dateutil"
+version = "2.9.0.post0"
+description = "Extensions to the standard Python datetime module"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+groups = ["main"]
+files = [
+    {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
+    {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
+]
+
+[package.dependencies]
+six = ">=1.5"
+
+[[package]]
 name = "python-dotenv"
 version = "1.1.1"
 description = "Read key-value pairs from a .env file and set them as environment variables"
@@ -1628,6 +1662,18 @@ files = [
     {file = "ruff-0.13.0-py3-none-win_amd64.whl", hash = "sha256:48e5c25c7a3713eea9ce755995767f4dcd1b0b9599b638b12946e892123d1efb"},
     {file = "ruff-0.13.0-py3-none-win_arm64.whl", hash = "sha256:ab80525317b1e1d38614addec8ac954f1b3e662de9d59114ecbf771d00cf613e"},
     {file = "ruff-0.13.0.tar.gz", hash = "sha256:5b4b1ee7eb35afae128ab94459b13b2baaed282b1fb0f472a73c82c996c8ae60"},
+]
+
+[[package]]
+name = "six"
+version = "1.17.0"
+description = "Python 2 and 3 compatibility utilities"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+groups = ["main"]
+files = [
+    {file = "six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"},
+    {file = "six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81"},
 ]
 
 [[package]]
@@ -2021,4 +2067,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "1066fda56aa9eea731324c9fba305385050cf9b6ff949cf571ee743e26055f5b"
+content-hash = "bc96051453fcacb03cb6812cec5fe15099bfcec299ee625c62dffe26caa9b4c0"

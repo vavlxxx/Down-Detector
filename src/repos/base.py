@@ -99,11 +99,12 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         obj = result.scalars().one()
         return self.mapper.map_to_domain_entity(obj)
 
-    async def get_one_or_add(self, data: BaseDTO, **params) -> SchemaType:
+    async def get_one_or_add(self, data: BaseDTO, **params) -> tuple[bool, SchemaType]:
         obj = await self.get_one_or_none(**data.model_dump())
-        if obj is None:
-            return await self.add(data, **params)
-        return obj
+        will_be_created = obj is None
+        if will_be_created:
+            obj = await self.add(data, **params)
+        return (will_be_created, obj)
 
     async def edit(
         self,
@@ -135,18 +136,18 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         return True
 
     async def delete(self, *filter, ensure_existence=True, **filter_by) -> bool:
+        if ensure_existence:
+            await self.get_one(*filter, **filter_by)
+
         delete_obj_stmt = delete(self.model).filter(*filter).filter_by(**filter_by)
         try:
-            result = await self.session.execute(delete_obj_stmt)
+            await self.session.execute(delete_obj_stmt)
         except DBAPIError as exc:
             if exc.orig and isinstance(exc.orig.__cause__, DataError):
                 raise ValueOutOfRangeError(detail=exc.orig.__cause__.args[0]) from exc
             if exc.orig and isinstance(exc.orig.__cause__, ForeignKeyViolationError):
                 raise RelatedObjectExistsError from exc
             raise exc
-
-        if ensure_existence and len(result.scalars().all()) == 0:  # type: ignore
-            raise ObjectNotFoundError
         return True
 
     async def delete_all(self, ensure_existence=False) -> bool:

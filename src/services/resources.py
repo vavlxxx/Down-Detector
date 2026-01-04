@@ -3,14 +3,14 @@ import time
 from datetime import datetime, timedelta
 
 import aiohttp
-from fastapi import status
+from fastapi import Request, status
 
 from src.config import settings
 from src.models.resoures import ResourceStatus
 from src.schemas.resoures import ResourceAddDTO, ResourceDTO, ResourceStatusAddDTO, ResourceStatusDTO
 from src.services.base import BaseService
 from src.tasks import worker
-from src.utils.exceptions import ResourceUnavailableError
+from src.utils.exceptions import ObjectNotFoundError, ResourceAlreadyExistsError, ResourceNotFoundError, ResourceUnavailableError
 from src.utils.logconfig import get_logger
 
 logger = get_logger("resources")
@@ -18,6 +18,7 @@ logger = get_logger("resources")
 
 class ResourceStatusesService(BaseService):
     async def get_statuses_by_resource(self, resource_id: int) -> list[ResourceStatusDTO]:
+        await ResourceService(self.db).get_resource(resource_id=resource_id)
         return await self.db.statuses.get_all_filtered(resource_id=resource_id)
 
     async def delete_unrelevant_statuses(self):
@@ -38,19 +39,42 @@ class ResourceStatusesService(BaseService):
 
 
 class ResourceService(BaseService):
-    async def create_resource(self, data: ResourceAddDTO) -> ResourceDTO:
-        resource = await self.db.resources.get_one_or_add(data=data)
-        response = await self.make_request_to_resource(str(data.url), resource.id, aiohttp.ClientSession())
+    async def create_resource(self, request: Request, data: ResourceAddDTO) -> ResourceDTO:
+        created, resource = await self.db.resources.get_one_or_add(data=data)
+        if not created:
+            raise ResourceAlreadyExistsError
 
-        if response.status_code not in range(status.HTTP_200_OK, status.HTTP_300_MULTIPLE_CHOICES):
+        response = await self.make_request_to_resource(
+            url=str(data.url),
+            resource_id=resource.id,
+            client=request.app.state.aiohttp_client,
+            save_to_db=False,
+        )
+
+        status_code = response.status_code
+        if (
+            status.HTTP_200_OK > status_code or status_code >= status.HTTP_300_MULTIPLE_CHOICES
+        ) and status_code != status.HTTP_403_FORBIDDEN:
             raise ResourceUnavailableError
 
         await self.db.commit()
         return resource
 
+    async def get_resource(self, resource_id: int) -> ResourceDTO:
+        try:
+            return await self.db.resources.get_one(resource_id=resource_id)
+        except ObjectNotFoundError as exc:
+            raise ResourceNotFoundError from exc
+
+    async def get_resources(self) -> list[ResourceDTO]:
+        return await self.db.resources.get_all()
+
     async def delete_resource(self, resource_id: int):
-        await self.db.statuses.delete(resource_id=resource_id)
-        await self.db.resources.delete(resource_id)
+        await self.db.statuses.delete(resource_id=resource_id, ensure_existence=False)
+        try:
+            await self.db.resources.delete(resource_id=resource_id)
+        except ObjectNotFoundError as exc:
+            raise ResourceNotFoundError from exc
         await self.db.commit()
 
     async def check_resources(self):
@@ -75,7 +99,7 @@ class ResourceService(BaseService):
         status_code = status.HTTP_418_IM_A_TEAPOT
 
         try:
-            async with client.get(url) as response:
+            async with client.get(url=url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 status_code = response.status
                 response.raise_for_status()
         except aiohttp.ClientResponseError as exc:
@@ -97,4 +121,5 @@ class ResourceService(BaseService):
         if save_to_db:
             await self.db.statuses.add(response)
             await self.db.commit()
+
         return response

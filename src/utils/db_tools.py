@@ -3,9 +3,9 @@ from typing import Self
 
 from sqlalchemy import Connection, inspect
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
-from src.repos.resources import ResourceRepo, ResourceStatusRepo
 
 from src.models.base import Base
+from src.repos.resources import ResourceRepo, ResourceStatusRepo
 from src.utils.exceptions import MissingTablesError
 
 logger = logging.getLogger(__name__)

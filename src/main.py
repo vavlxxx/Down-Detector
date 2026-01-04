@@ -15,6 +15,8 @@ from src.api import router as main_router
 from src.api.docs import router as docs_router
 from src.config import settings
 from src.db import engine
+
+# from src.tasks.broker import broker, scheduler
 from src.utils.db_tools import DBHealthChecker
 from src.utils.logconfig import configurate_logging, get_logger
 

@@ -43,6 +43,14 @@ class ResourceUnavailableError(ApplicationError):
     detail = "Resource is unavailable"
 
 
+class ResourceNotFoundError(ObjectNotFoundError):
+    detail = "Resource not found"
+
+
+class ResourceAlreadyExistsError(ObjectAlreadyExistsError):
+    detail = "Resource already exists"
+
+
 class ApplicationHTTPError(HTTPException):
     detail = "Something went wrong"
     status = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -51,3 +59,23 @@ class ApplicationHTTPError(HTTPException):
         if detail is not None:
             self.detail = detail
         super().__init__(detail=self.detail, status_code=self.status)
+
+
+class ResourceUnavailableHTTPError(ApplicationHTTPError):
+    detail = "Resource is unavailable"
+    status = status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+class ValueOutOfRangeHTTPError(ApplicationHTTPError):
+    detail = "Value out of integer range"
+    status = status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+class ResourceNotFoundHTTPError(ApplicationHTTPError):
+    detail = "Resource not found"
+    status = status.HTTP_404_NOT_FOUND
+
+
+class ResourceAlreadyExistsHTTPError(ApplicationHTTPError):
+    detail = "Resource already exists"
+    status = status.HTTP_409_CONFLICT
