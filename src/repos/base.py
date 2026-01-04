@@ -32,7 +32,7 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         if exc.orig and isinstance(exc.orig.__cause__, CheckViolationError):
             raise ObjectInvalidValueError from exc
         if exc.orig and isinstance(exc.orig.__cause__, ForeignKeyViolationError):
-            raise ObjectNotFoundError from exc
+            raise RelatedObjectExistsError from exc
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -45,9 +45,7 @@ class BaseRepo(Generic[ModelType, SchemaType]):
             if exc.orig and isinstance(exc.orig.__cause__, DataError):
                 raise ValueOutOfRangeError(detail=exc.orig.__cause__.args[0]) from exc
             raise exc
-        return [
-            self.mapper.map_to_domain_entity(item) for item in result.scalars().all()
-        ]
+        return [self.mapper.map_to_domain_entity(item) for item in result.scalars().all()]
 
     async def get_all(self) -> list[SchemaType]:
         return await self.get_all_filtered()
@@ -81,11 +79,7 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         return self.mapper.map_to_domain_entity(obj)
 
     async def add_bulk(self, data: Sequence[BaseDTO]) -> list[SchemaType]:
-        add_obj_stmt = (
-            insert(self.model)
-            .values([item.model_dump() for item in data])
-            .returning(self.model)
-        )
+        add_obj_stmt = insert(self.model).values([item.model_dump() for item in data]).returning(self.model)
         try:
             result = await self.session.execute(add_obj_stmt)
         except IntegrityError as exc:
@@ -95,11 +89,7 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         return [self.mapper.map_to_domain_entity(item) for item in objs]
 
     async def add(self, data: BaseDTO, **params) -> SchemaType:
-        add_obj_stmt = (
-            insert(self.model)
-            .values(**data.model_dump(), **params)
-            .returning(self.model)
-        )
+        add_obj_stmt = insert(self.model).values(**data.model_dump(), **params).returning(self.model)
         try:
             result = await self.session.execute(add_obj_stmt)
         except IntegrityError as exc:

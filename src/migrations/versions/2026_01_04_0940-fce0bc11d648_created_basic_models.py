@@ -40,9 +40,9 @@ def upgrade() -> None:
         sa.UniqueConstraint("url", name=op.f("uq_resource_url")),
     )
     op.create_table(
-        "resourse_status",
+        "resource_status",
         sa.Column(
-            "resourse_status_id",
+            "resource_status_id",
             sa.Integer(),
             autoincrement=True,
             nullable=False,
@@ -65,13 +65,13 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["resource_id"],
             ["resource.resource_id"],
-            name=op.f("fk_resourse_status_resource_id_resource"),
+            name=op.f("fk_resource_status_resource_id_resource"),
         ),
-        sa.PrimaryKeyConstraint("resourse_status_id", name=op.f("pk_resourse_status")),
+        sa.PrimaryKeyConstraint("resource_status_id", name=op.f("pk_resource_status")),
     )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_table("resourse_status")
+    op.drop_table("resource_status")
     op.drop_table("resource")

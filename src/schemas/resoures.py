@@ -15,15 +15,15 @@ class ResourceDTO(ResourceAddDTO, TimingDTO):
         return self.resource_id
 
 
-class ResourseStatusAddDTO(BaseDTO):
+class ResourceStatusAddDTO(BaseDTO):
     resource_id: int
     response_time: float
     status_code: int
 
 
-class ResourseStatusDTO(ResourseStatusAddDTO, TimingDTO):
-    resourse_status_id: int
+class ResourceStatusDTO(ResourceStatusAddDTO, TimingDTO):
+    resource_status_id: int
 
     @property
     def id(self) -> int:
-        return self.resourse_status_id
+        return self.resource_status_id

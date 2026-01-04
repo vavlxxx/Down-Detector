@@ -39,6 +39,10 @@ class ValueOutOfRangeError(ApplicationError):
     detail = "Value out of integer range"
 
 
+class ResourceUnavailableError(ApplicationError):
+    detail = "Resource is unavailable"
+
+
 class ApplicationHTTPError(HTTPException):
     detail = "Something went wrong"
     status = status.HTTP_500_INTERNAL_SERVER_ERROR

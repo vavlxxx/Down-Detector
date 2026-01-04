@@ -4,7 +4,7 @@ from taskiq import TaskiqDepends
 
 from src.api.v1.dependencies.db import get_db
 from src.config import settings
-from src.services import resourses
+from src.services import resources
 from src.tasks.broker import broker
 from src.utils.db_tools import DBManager
 
@@ -16,7 +16,7 @@ from src.utils.db_tools import DBManager
 async def delete_unrelevant_statuses(
     db: Annotated[DBManager, TaskiqDepends(get_db)],
 ) -> None:
-    await resourses.ResourceStatusesService(db).delete_unrelevant_statuses()
+    await resources.ResourceStatusesService(db).delete_unrelevant_statuses()
 
 
 @broker.task(
@@ -26,4 +26,4 @@ async def delete_unrelevant_statuses(
 async def check_resources(
     db: Annotated[DBManager, TaskiqDepends(get_db)],
 ) -> None:
-    await resourses.ResourceService(db).check_resourses()
+    await resources.ResourceService(db).check_resources()

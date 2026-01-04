@@ -1,6 +1,6 @@
-from src.models.resoures import Resource, ResourseStatus
+from src.models.resoures import Resource, ResourceStatus
 from src.repos.mappers.base import DataMapper
-from src.schemas.resoures import ResourceDTO, ResourseStatusDTO
+from src.schemas.resoures import ResourceDTO, ResourceStatusDTO
 
 
 class ResourceMapper(DataMapper[Resource, ResourceDTO]):
@@ -8,6 +8,6 @@ class ResourceMapper(DataMapper[Resource, ResourceDTO]):
     schema = ResourceDTO
 
 
-class ResourseStatusMapper(DataMapper[ResourseStatus, ResourseStatusDTO]):
-    model = ResourseStatus
-    schema = ResourseStatusDTO
+class ResourceStatusMapper(DataMapper[ResourceStatus, ResourceStatusDTO]):
+    model = ResourceStatus
+    schema = ResourceStatusDTO

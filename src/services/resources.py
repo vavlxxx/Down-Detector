@@ -6,21 +6,23 @@ import aiohttp
 from fastapi import status
 
 from src.config import settings
-from src.models.resoures import ResourseStatus
-from src.schemas.resoures import ResourseStatusAddDTO
+from src.models.resoures import ResourceStatus
+from src.schemas.resoures import ResourceAddDTO, ResourceDTO, ResourceStatusAddDTO, ResourceStatusDTO
 from src.services.base import BaseService
 from src.tasks import worker
+from src.utils.exceptions import ResourceUnavailableError
 from src.utils.logconfig import get_logger
 
 logger = get_logger("resources")
 
 
 class ResourceStatusesService(BaseService):
+    async def get_statuses_by_resource(self, resource_id: int) -> list[ResourceStatusDTO]:
+        return await self.db.statuses.get_all_filtered(resource_id=resource_id)
+
     async def delete_unrelevant_statuses(self):
-        threshold = datetime.now() - timedelta(
-            hours=settings.taskiq.UNRELEVANT_STATUS_HOURS
-        )
-        expression = ResourseStatus.created_at <= threshold
+        threshold = datetime.now() - timedelta(hours=settings.taskiq.UNRELEVANT_STATUS_HOURS)
+        expression = ResourceStatus.created_at <= threshold
         statuses = await self.db.statuses.get_all_filtered(expression)
         if not statuses:
             logger.info(
@@ -31,20 +33,35 @@ class ResourceStatusesService(BaseService):
 
         logger.debug("Found %s unrelevant statuses. Performing deletion", len(statuses))
         statuses_ids = tuple(st.id for st in statuses)
-        await self.db.statuses.delete(ResourseStatus.resource_id.in_(statuses_ids))
+        await self.db.statuses.delete(ResourceStatus.resource_id.in_(statuses_ids))
         await self.db.commit()
 
 
 class ResourceService(BaseService):
-    async def check_resourses(self):
-        resourses = await self.db.resources.get_all()
-        if not resourses:
-            logger.info("There is no resourses to check. Skipping...")
+    async def create_resource(self, data: ResourceAddDTO) -> ResourceDTO:
+        resource = await self.db.resources.get_one_or_add(data=data)
+        response = await self.make_request_to_resource(str(data.url), resource.id, aiohttp.ClientSession())
+
+        if response.status_code not in range(status.HTTP_200_OK, status.HTTP_300_MULTIPLE_CHOICES):
+            raise ResourceUnavailableError
+
+        await self.db.commit()
+        return resource
+
+    async def delete_resource(self, resource_id: int):
+        await self.db.statuses.delete(resource_id=resource_id)
+        await self.db.resources.delete(resource_id)
+        await self.db.commit()
+
+    async def check_resources(self):
+        resources = await self.db.resources.get_all()
+        if not resources:
+            logger.info("There is no resources to check. Skipping...")
             return
 
         tasks = []
-        for resourse in resourses:
-            tasks.append(worker.check_single_resource.kiq(resourse.id, str(resourse.url)))  # type: ignore
+        for resource in resources:
+            tasks.append(worker.check_single_resource.kiq(resource.id, str(resource.url)))  # type: ignore
         await asyncio.gather(*tasks)
 
     async def make_request_to_resource(
@@ -52,8 +69,8 @@ class ResourceService(BaseService):
         url: str,
         resource_id: int,
         client: aiohttp.ClientSession,
-    ) -> None:
-
+        save_to_db: bool = True,
+    ) -> ResourceStatusAddDTO:
         start = time.perf_counter()
         status_code = status.HTTP_418_IM_A_TEAPOT
 
@@ -71,10 +88,13 @@ class ResourceService(BaseService):
             end = time.perf_counter()
             response_time = end - start
 
-        response = ResourseStatusAddDTO(
+        response = ResourceStatusAddDTO(
             resource_id=resource_id,
             response_time=response_time,
             status_code=status_code,
         )
-        await self.db.statuses.add(response)
-        await self.db.commit()
+
+        if save_to_db:
+            await self.db.statuses.add(response)
+            await self.db.commit()
+        return response

@@ -1,2 +1,2 @@
 # ruff: noqa: F401
-from src.models.resoures import Resource, ResourseStatus
+from src.models.resoures import Resource, ResourceStatus

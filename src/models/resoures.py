@@ -17,10 +17,10 @@ class Resource(Base, TimingMixin):
     url: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
 
 
-class ResourseStatus(Base, TimingMixin):
-    __tablename__ = "resourse_status"
+class ResourceStatus(Base, TimingMixin):
+    __tablename__ = "resource_status"
 
-    resourse_status_id: Mapped[int] = mapped_column(
+    resource_status_id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         autoincrement=True,
@@ -28,6 +28,4 @@ class ResourseStatus(Base, TimingMixin):
     )
     response_time: Mapped[float]
     status_code: Mapped[int]
-    resource_id: Mapped[int] = mapped_column(
-        ForeignKey(f"{Resource.__tablename__}.resource_id")
-    )
+    resource_id: Mapped[int] = mapped_column(ForeignKey(f"{Resource.__tablename__}.resource_id"))
