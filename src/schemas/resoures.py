@@ -12,7 +12,7 @@ class ResourceAddDTO(BaseDTO):
         try:
             HttpUrl(value)
         except Exception as exc:
-            raise ValueError from exc
+            raise ValueError("Invalid URL address") from exc
         return value
 
 
