@@ -10,7 +10,7 @@ from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import DBAPIError, IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.repos.mappers.base import DataMapper, ModelType, SchemaType
+from src.repos.mappers.base import DataMapper, ModelType, SchemaType, SchemaUpdateType
 from src.schemas.base import BaseDTO
 from src.utils.exceptions import (
     ObjectAlreadyExistsError,
@@ -21,7 +21,7 @@ from src.utils.exceptions import (
 )
 
 
-class BaseRepo(Generic[ModelType, SchemaType]):
+class BaseRepo(Generic[ModelType, SchemaType, SchemaUpdateType]):
     model: type[ModelType]
     schema: type[SchemaType]
     mapper: type[DataMapper[ModelType, SchemaType]]
@@ -79,7 +79,9 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         return self.mapper.map_to_domain_entity(obj)
 
     async def add_bulk(self, data: Sequence[BaseDTO]) -> list[SchemaType]:
-        add_obj_stmt = insert(self.model).values([item.model_dump() for item in data]).returning(self.model)
+        add_obj_stmt = (
+            insert(self.model).values([item.model_dump() for item in data]).returning(self.model)
+        )
         try:
             result = await self.session.execute(add_obj_stmt)
         except IntegrityError as exc:
@@ -89,7 +91,9 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         return [self.mapper.map_to_domain_entity(item) for item in objs]
 
     async def add(self, data: BaseDTO, **params) -> SchemaType:
-        add_obj_stmt = insert(self.model).values(**data.model_dump(), **params).returning(self.model)
+        add_obj_stmt = (
+            insert(self.model).values(**data.model_dump(), **params).returning(self.model)
+        )
         try:
             result = await self.session.execute(add_obj_stmt)
         except IntegrityError as exc:
@@ -108,10 +112,10 @@ class BaseRepo(Generic[ModelType, SchemaType]):
 
     async def edit(
         self,
-        data: SchemaType,
-        exclude_unset=True,
-        exclude_fields=None,
-        ensure_existence=True,
+        data: SchemaUpdateType,
+        exclude_unset: bool = True,
+        exclude_fields: set[str] | None = None,
+        ensure_existence: bool = True,
         *filter,
         **filter_by,
     ) -> bool:

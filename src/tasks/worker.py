@@ -4,6 +4,7 @@ import aiohttp
 from taskiq import TaskiqDepends
 
 from src.api.v1.dependencies.db import get_db
+from src.schemas.enums import ResourceState
 from src.services import resources
 from src.tasks.broker import broker
 from src.tasks.dependencies import get_client
@@ -17,6 +18,7 @@ from src.utils.db_tools import DBManager
     delay=10,
 )
 async def check_single_resource(
+    state: ResourceState,
     resource_id: int,
     url: str,
     client: Annotated[aiohttp.ClientSession, TaskiqDepends(get_client)],
@@ -26,4 +28,5 @@ async def check_single_resource(
         url=url,
         client=client,
         resource_id=resource_id,
+        state=state,
     )

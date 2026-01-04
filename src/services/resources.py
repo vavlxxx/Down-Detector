@@ -7,10 +7,22 @@ from fastapi import Request, status
 
 from src.config import settings
 from src.models.resoures import ResourceStatus
-from src.schemas.resoures import ResourceAddDTO, ResourceDTO, ResourceStatusAddDTO, ResourceStatusDTO
+from src.schemas.enums import ResourceState
+from src.schemas.resoures import (
+    ResourceAddDTO,
+    ResourceDTO,
+    ResourceStatusAddDTO,
+    ResourceStatusDTO,
+    ResourceUpdateDTO,
+)
 from src.services.base import BaseService
 from src.tasks import worker
-from src.utils.exceptions import ObjectNotFoundError, ResourceAlreadyExistsError, ResourceNotFoundError, ResourceUnavailableError
+from src.utils.exceptions import (
+    ObjectNotFoundError,
+    ResourceAlreadyExistsError,
+    ResourceNotFoundError,
+    ResourceUnavailableError,
+)
 from src.utils.logconfig import get_logger
 
 logger = get_logger("resources")
@@ -39,6 +51,11 @@ class ResourceStatusesService(BaseService):
 
 
 class ResourceService(BaseService):
+    def _is_valid_status(self, status_code: int) -> bool:
+        anti_bot_protection = status_code == status.HTTP_403_FORBIDDEN
+        success_status = status_code in range(status.HTTP_200_OK, status.HTTP_300_MULTIPLE_CHOICES)
+        return success_status or anti_bot_protection
+
     async def create_resource(self, request: Request, data: ResourceAddDTO) -> ResourceDTO:
         created, resource = await self.db.resources.get_one_or_add(data=data)
         if not created:
@@ -52,9 +69,7 @@ class ResourceService(BaseService):
         )
 
         status_code = response.status_code
-        if (
-            status.HTTP_200_OK > status_code or status_code >= status.HTTP_300_MULTIPLE_CHOICES
-        ) and status_code != status.HTTP_403_FORBIDDEN:
+        if not self._is_valid_status(status_code):
             raise ResourceUnavailableError
 
         await self.db.commit()
@@ -85,8 +100,28 @@ class ResourceService(BaseService):
 
         tasks = []
         for resource in resources:
-            tasks.append(worker.check_single_resource.kiq(resource.id, str(resource.url)))  # type: ignore
+            tasks.append(
+                worker.check_single_resource.kiq(
+                    state=resource.state,
+                    resource_id=resource.id,
+                    url=str(resource.url),
+                )  # type: ignore
+            )
         await asyncio.gather(*tasks)
+
+    async def toggle_resource_state(self, resource_id: int, state: ResourceState):
+        states = (ResourceState.UP, ResourceState.DOWN)
+        new_state_idx = int(state == ResourceState.UP)
+        new_state = states[new_state_idx]
+
+        update_obj = ResourceUpdateDTO(state=new_state)
+        await self.db.resources.edit(
+            resource_id=resource_id,
+            data=update_obj,
+            ensure_existence=False,
+        )
+        await self.db.commit()
+        return new_state
 
     async def make_request_to_resource(
         self,
@@ -94,12 +129,14 @@ class ResourceService(BaseService):
         resource_id: int,
         client: aiohttp.ClientSession,
         save_to_db: bool = True,
+        *args,
+        **kwargs,
     ) -> ResourceStatusAddDTO:
         start = time.perf_counter()
         status_code = status.HTTP_418_IM_A_TEAPOT
 
         try:
-            async with client.get(url=url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+            async with client.get(url=url) as response:
                 status_code = response.status
                 response.raise_for_status()
         except aiohttp.ClientResponseError as exc:
@@ -119,6 +156,32 @@ class ResourceService(BaseService):
         )
 
         if save_to_db:
+            state: ResourceState = kwargs.get("state", None)
+            if not state:
+                logger.error("Cannot find required 'state' key in kwargs")
+                raise KeyError("Missing 'state' key in kwargs")
+
+            is_valid_status = self._is_valid_status(status_code)
+
+            if (
+                not is_valid_status
+                and state == ResourceState.UP
+                or is_valid_status
+                and state == ResourceState.DOWN
+            ):
+                old_state = state
+                new_state = await self.toggle_resource_state(
+                    resource_id=resource_id,
+                    state=state,
+                )
+
+                logger.info(
+                    "Toggled %s resource state from %s to %s",
+                    url,
+                    old_state.value,
+                    new_state.value,
+                )
+
             await self.db.statuses.add(response)
             await self.db.commit()
 

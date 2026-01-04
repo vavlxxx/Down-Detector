@@ -1,8 +1,10 @@
 from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.models.base import Base
 from src.models.mixins.timing import TimingMixin
+from src.schemas.enums import ResourceState
 
 
 class Resource(Base, TimingMixin):
@@ -14,7 +16,14 @@ class Resource(Base, TimingMixin):
         autoincrement=True,
         sort_order=-1,
     )
-    url: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    url: Mapped[str] = mapped_column(String(255), unique=True)
+    state: Mapped[ResourceState] = mapped_column(
+        ENUM(
+            ResourceState,
+            name="resource_state",
+        ),
+        default=ResourceState.UP,
+    )
 
 
 class ResourceStatus(Base, TimingMixin):

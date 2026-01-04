@@ -16,7 +16,7 @@ class TaskiqConfig(BaseModel):
     MAX_DELAY_EXPONENT: int = 120
 
     UNRELEVANT_STATUS_HOURS: int = 24
-    CRON_CHECK_RESOURCES: CronStr = CronStr("*/5 * * * *")
+    CRON_CHECK_RESOURCES: CronStr = CronStr("*/1 * * * *")
     CRON_CHECK_UNRELEVANT_STATUSES: CronStr = CronStr("*/5 * * * *")
 
 
@@ -53,9 +53,7 @@ class DBConfig(BaseModel):
 
     @property
     def DB_URL(self) -> str:
-        url: str = (
-            f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        )
+        url: str = f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         return url
 
 
@@ -77,7 +75,7 @@ class UvicornConfig(BaseModel):
 
 
 class GeneralAppConfig(BaseModel):
-    TITLE: str = "FastAPI Quick Start"
+    TITLE: str = "Down Detector 💥"
     MODE: Literal["TEST", "DEV"]
 
 
