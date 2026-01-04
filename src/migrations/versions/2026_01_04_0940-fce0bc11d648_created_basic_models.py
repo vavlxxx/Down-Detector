@@ -21,7 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     op.create_table(
-        "resources",
+        "resource",
         sa.Column("resource_id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("url", sa.String(length=255), nullable=False),
         sa.Column(
@@ -36,8 +36,8 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.PrimaryKeyConstraint("resource_id", name=op.f("pk_resources")),
-        sa.UniqueConstraint("url", name=op.f("uq_resources_url")),
+        sa.PrimaryKeyConstraint("resource_id", name=op.f("pk_resource")),
+        sa.UniqueConstraint("url", name=op.f("uq_resource_url")),
     )
     op.create_table(
         "resourse_status",
@@ -64,8 +64,8 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(
             ["resource_id"],
-            ["resources.resource_id"],
-            name=op.f("fk_resourse_status_resource_id_resources"),
+            ["resource.resource_id"],
+            name=op.f("fk_resourse_status_resource_id_resource"),
         ),
         sa.PrimaryKeyConstraint("resourse_status_id", name=op.f("pk_resourse_status")),
     )
@@ -74,4 +74,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     op.drop_table("resourse_status")
-    op.drop_table("resources")
+    op.drop_table("resource")

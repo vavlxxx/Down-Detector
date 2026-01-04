@@ -5,6 +5,7 @@ from sqlalchemy import Connection, inspect
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from src.models.base import Base
+from src.repos.resourses import ResourceRepo, ResourseStatusRepo
 from src.utils.exceptions import MissingTablesError
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,8 @@ class DBManager:
 
     async def __aenter__(self) -> Self:
         self.session: AsyncSession = self.session_factory()
+        self.resources = ResourceRepo(self.session)
+        self.statuses = ResourseStatusRepo(self.session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:

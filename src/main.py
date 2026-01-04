@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
 
+import aiohttp
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 import uvicorn
@@ -14,7 +16,7 @@ from src.api.docs import router as docs_router
 from src.config import settings
 from src.db import engine
 from src.utils.db_tools import DBHealthChecker
-from src.utils.logging import configurate_logging, get_logger
+from src.utils.logconfig import configurate_logging, get_logger
 
 
 @asynccontextmanager
@@ -23,9 +25,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     helper = DBHealthChecker(engine=engine)
     await helper.check()
-
     logger.info("All checks passed!")
-    yield
+
+    # if broker.is_worker_process:
+    #     await scheduler.startup()
+    #     await broker.startup()
+    #     logger.info("Broker and scheduler started")
+
+    async with aiohttp.ClientSession() as session:
+        app.state.aiohttp_client = session
+        yield
+
+    # if broker.is_worker_process:
+    #     await scheduler.shutdown()
+    #     await broker.shutdown()
+    #     logger.info("Broker and scheduler has been shut down")
 
     await helper.dispose()
     logger.info("Shutting down...")

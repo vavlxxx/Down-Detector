@@ -144,7 +144,7 @@ class BaseRepo(Generic[ModelType, SchemaType]):
             raise exc
         return True
 
-    async def delete(self, ensure_existence=True, *filter, **filter_by) -> bool:
+    async def delete(self, *filter, ensure_existence=True, **filter_by) -> bool:
         delete_obj_stmt = delete(self.model).filter(*filter).filter_by(**filter_by)
         try:
             result = await self.session.execute(delete_obj_stmt)
@@ -155,7 +155,7 @@ class BaseRepo(Generic[ModelType, SchemaType]):
                 raise RelatedObjectExistsError from exc
             raise exc
 
-        if ensure_existence and result.rowcount == 0:
+        if ensure_existence and len(result.scalars().all()) == 0:  # type: ignore
             raise ObjectNotFoundError
         return True
 

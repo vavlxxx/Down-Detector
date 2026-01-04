@@ -18,11 +18,41 @@
             "backupCount": 3,
             "mode": "a",
             "encoding": "utf-8"
+        },
+        "taskiq_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "logs/taskiq_worker.log",
+            "formatter": "detailed",
+            "level": "INFO",
+            "maxBytes": 1048576,
+            "backupCount": 3,
+            "mode": "a",
+            "encoding": "utf-8"
         }
     },
     "loggers": {
         "src": {
             "handlers": ["stdout","main_file"],
+            "level": "INFO",
+            "propagate": false
+        },
+        "tasks": {
+            "handlers": ["stdout","main_file"],
+            "level": "INFO",
+            "propagate": false
+        },
+        "taskiq": {
+            "handlers": ["stdout", "taskiq_file"],
+            "level": "INFO",
+            "propagate": false
+        },
+        "taskiq.worker": {
+            "handlers": ["stdout", "taskiq_file"],
+            "level": "INFO",
+            "propagate": false
+        },
+        "taskiq.scheduler": {
+            "handlers": ["stdout", "taskiq_file"],
             "level": "INFO",
             "propagate": false
         },
