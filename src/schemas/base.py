@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -6,3 +8,8 @@ class BaseDTO(BaseModel):
         from_attributes=True,
         strict=True,
     )
+
+
+class TimingDTO(BaseDTO):
+    created_at: datetime
+    updated_at: datetime

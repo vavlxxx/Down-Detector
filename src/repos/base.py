@@ -1,6 +1,11 @@
 from typing import Generic, Sequence
 
-from asyncpg import CheckViolationError, DataError, ForeignKeyViolationError, UniqueViolationError
+from asyncpg import (
+    CheckViolationError,
+    DataError,
+    ForeignKeyViolationError,
+    UniqueViolationError,
+)
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import DBAPIError, IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +24,7 @@ from src.utils.exceptions import (
 class BaseRepo(Generic[ModelType, SchemaType]):
     model: type[ModelType]
     schema: type[SchemaType]
-    mapper: DataMapper[ModelType, SchemaType]
+    mapper: type[DataMapper[ModelType, SchemaType]]
 
     def __handle_integrity_error(self, exc: IntegrityError) -> None:
         if exc.orig and isinstance(exc.orig.__cause__, UniqueViolationError):
@@ -33,14 +38,16 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         self.session = session
 
     async def get_all_filtered(self, *filter, **filter_by) -> list[SchemaType]:
-        query = select(self.model).filter(*filter).filter_by(**filter_by).order_by(self.model.id)  # type: ignore
+        query = select(self.model).filter(*filter).filter_by(**filter_by)
         try:
             result = await self.session.execute(query)
         except DBAPIError as exc:
             if exc.orig and isinstance(exc.orig.__cause__, DataError):
                 raise ValueOutOfRangeError(detail=exc.orig.__cause__.args[0]) from exc
             raise exc
-        return [self.mapper.map_to_domain_entity(item) for item in result.scalars().all()]
+        return [
+            self.mapper.map_to_domain_entity(item) for item in result.scalars().all()
+        ]
 
     async def get_all(self) -> list[SchemaType]:
         return await self.get_all_filtered()
@@ -74,7 +81,11 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         return self.mapper.map_to_domain_entity(obj)
 
     async def add_bulk(self, data: Sequence[BaseDTO]) -> list[SchemaType]:
-        add_obj_stmt = insert(self.model).values([item.model_dump() for item in data]).returning(self.model)
+        add_obj_stmt = (
+            insert(self.model)
+            .values([item.model_dump() for item in data])
+            .returning(self.model)
+        )
         try:
             result = await self.session.execute(add_obj_stmt)
         except IntegrityError as exc:
@@ -84,7 +95,11 @@ class BaseRepo(Generic[ModelType, SchemaType]):
         return [self.mapper.map_to_domain_entity(item) for item in objs]
 
     async def add(self, data: BaseDTO, **params) -> SchemaType:
-        add_obj_stmt = insert(self.model).values(**data.model_dump(), **params).returning(self.model)
+        add_obj_stmt = (
+            insert(self.model)
+            .values(**data.model_dump(), **params)
+            .returning(self.model)
+        )
         try:
             result = await self.session.execute(add_obj_stmt)
         except IntegrityError as exc:

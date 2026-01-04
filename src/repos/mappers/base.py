@@ -1,7 +1,6 @@
 from typing import Generic, TypeVar
 
-from sqlalchemy import Row, RowMapping
-
+# from sqlalchemy import Row, RowMapping
 from src.models.base import Base
 from src.schemas.base import BaseDTO
 
@@ -14,15 +13,9 @@ class DataMapper(Generic[ModelType, SchemaType]):
     schema: type[SchemaType]
 
     @classmethod
-    def map_to_domain_entity(
-        cls,
-        db_model: ModelType | dict | Row | RowMapping,
-    ) -> SchemaType:
+    def map_to_domain_entity(cls, db_model: ModelType) -> SchemaType:
         return cls.schema.model_validate(db_model)
 
     @classmethod
-    def map_to_persistence_entity(
-        cls,
-        schema: SchemaType,
-    ) -> ModelType:
+    def map_to_persistence_entity(cls, schema: SchemaType) -> ModelType:
         return cls.model(**schema.model_dump())
