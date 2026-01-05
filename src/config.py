@@ -77,6 +77,8 @@ class UvicornConfig(BaseModel):
 class GeneralAppConfig(BaseModel):
     TITLE: str = "Down Detector 💥"
     MODE: Literal["TEST", "DEV"]
+    API_PREFIX: str = "/api"
+    V1_PREFIX: str = "/v1"
 
 
 class Settings(BaseSettings):

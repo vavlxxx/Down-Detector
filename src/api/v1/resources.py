@@ -1,6 +1,13 @@
 from fastapi import APIRouter, Request
 
 from src.api.v1.dependencies.db import DBDep
+from src.api.v1.responses.resourses import (
+    CreateResourceResponse,
+    DeleteResourceResponse,
+    GetResourceResponse,
+    GetResourcesResponse,
+    GetStatusesResponse,
+)
 from src.schemas.resoures import ResourceAddDTO
 from src.services.resources import ResourceService, ResourceStatusesService
 from src.utils.exceptions import (
@@ -22,9 +29,9 @@ async def get_resources(
     db: DBDep,
 ):
     resources = await ResourceService(db).get_resources()
-    return {
-        "data": resources,
-    }
+    return GetResourcesResponse(
+        data=resources,
+    )
 
 
 @router.post("/")
@@ -39,9 +46,9 @@ async def create_resource(
         raise ResourceUnavailableHTTPError from exc
     except ResourceAlreadyExistsError as exc:
         raise ResourceAlreadyExistsHTTPError from exc
-    return {
-        "data": resource,
-    }
+    return CreateResourceResponse(
+        data=resource,
+    )
 
 
 @router.get("/{resource_id}")
@@ -55,9 +62,9 @@ async def get_resource(
         raise ValueOutOfRangeHTTPError from exc
     except ResourceNotFoundError as exc:
         raise ResourceNotFoundHTTPError from exc
-    return {
-        "data": resource,
-    }
+    return GetResourceResponse(
+        data=resource,
+    )
 
 
 @router.delete("/{resource_id}")
@@ -71,10 +78,9 @@ async def delete_resource(
         raise ValueOutOfRangeHTTPError from exc
     except ResourceNotFoundError as exc:
         raise ResourceNotFoundHTTPError from exc
-    return {
-        "detail": "Resource was successfully deleted",
-        "data": None,
-    }
+    return DeleteResourceResponse(
+        detail="Resource was successfully deleted",
+    )
 
 
 @router.get("/{resource_id}/statuses")
@@ -83,11 +89,13 @@ async def get_statuses_by_resource(
     db: DBDep,
 ):
     try:
-        statuses = await ResourceStatusesService(db).get_statuses_by_resource(resource_id=resource_id)
+        statuses = await ResourceStatusesService(db).get_statuses_by_resource(
+            resource_id=resource_id
+        )
     except ValueOutOfRangeError as exc:
         raise ValueOutOfRangeHTTPError from exc
     except ResourceNotFoundError as exc:
         raise ResourceNotFoundHTTPError from exc
-    return {
-        "data": statuses,
-    }
+    return GetStatusesResponse(
+        data=statuses,
+    )
