@@ -158,7 +158,7 @@ class ResourceService(BaseService):
         )
 
         if save_to_db:
-            state: ResourceState = kwargs.get("state", None)
+            state: ResourceState | None = kwargs.get("state", None)
             if not state:
                 logger.error("Cannot find required 'state' key in kwargs")
                 raise KeyError("Missing 'state' key in kwargs")

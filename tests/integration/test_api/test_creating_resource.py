@@ -32,13 +32,28 @@ async def create_resource_bulk(ac_mocked: AsyncClient):
 
 
 @pytest.mark.parametrize(
-    "url, expected_status, validation_error, count",
+    "url, validation_error, expected_status, count",
     [
-        ("", 422, True, 0),
-        ("https://example.com", 200, False, 1),
-        ("http://12312123.com", 422, False, 1),
-        ("http:12312123.com", 422, False, 1),
-        ("131", 422, True, 1),
+        ("https://www.google.com", False, 200, 1),
+        ("https://www.example.com/nonexistent", False, 422, 1),
+        ("https://github.com", False, 200, 2),
+        ("http://invalid.website", False, 422, 2),
+        ("https://stackoverflow.com", False, 200, 3),
+        ("", True, 422, 3),
+        ("https://www.python.org", False, 200, 4),
+        ("134", True, 422, 4),
+        ("https://docs.python.org", False, 200, 5),
+        ("https://httpstat.us/500", False, 422, 5),
+        ("https://www.wikipedia.org", False, 200, 6),
+        ("http://localhost:9999", False, 422, 6),
+        ("https://news.ycombinator.com", False, 200, 7),
+        ("https://expired.badssl.com", False, 422, 7),
+        ("https://www.reddit.com", False, 200, 8),
+        ("https://self-signed.badssl.com", False, 422, 8),
+        ("https://www.youtube.com", False, 200, 9),
+        ("https://httpstat.us/403", False, 422, 9),
+        ("https://www.amazon.com", False, 200, 10),
+        ("https://wrong.host.badssl.com", False, 422, 10),
     ],
 )
 async def test_create_resource(

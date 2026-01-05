@@ -1,14 +1,21 @@
 from fastapi import APIRouter, Request
 
 from src.api.v1.dependencies.db import DBDep
-from src.api.v1.responses.resourses import (
+from src.api.v1.responses.resources import (
+    RESP_CREATE_RESOURCE,
+    RESP_DELETE_RESOURCE,
+    RESP_GET_RESOURCE,
+    RESP_GET_RESOURCE_STATUSES,
+    RESP_GET_RESOURCES,
+)
+from src.schemas.resoures import ResourceAddDTO
+from src.schemas.responses.resourses import (
     CreateResourceResponse,
     DeleteResourceResponse,
     GetResourceResponse,
     GetResourcesResponse,
     GetStatusesResponse,
 )
-from src.schemas.resoures import ResourceAddDTO
 from src.services.resources import ResourceService, ResourceStatusesService
 from src.utils.exceptions import (
     ResourceAlreadyExistsError,
@@ -24,7 +31,10 @@ from src.utils.exceptions import (
 router = APIRouter(prefix="/resources")
 
 
-@router.get("/")
+@router.get(
+    path="/",
+    responses=RESP_GET_RESOURCES,
+)
 async def get_resources(
     db: DBDep,
 ):
@@ -34,7 +44,10 @@ async def get_resources(
     )
 
 
-@router.post("/")
+@router.post(
+    path="/",
+    responses=RESP_CREATE_RESOURCE,
+)
 async def create_resource(
     request: Request,
     data: ResourceAddDTO,
@@ -51,7 +64,10 @@ async def create_resource(
     )
 
 
-@router.get("/{resource_id}")
+@router.get(
+    path="/{resource_id}",
+    responses=RESP_GET_RESOURCE,
+)
 async def get_resource(
     resource_id: int,
     db: DBDep,
@@ -67,7 +83,10 @@ async def get_resource(
     )
 
 
-@router.delete("/{resource_id}")
+@router.delete(
+    path="/{resource_id}",
+    responses=RESP_DELETE_RESOURCE,
+)
 async def delete_resource(
     resource_id: int,
     db: DBDep,
@@ -83,7 +102,10 @@ async def delete_resource(
     )
 
 
-@router.get("/{resource_id}/statuses")
+@router.get(
+    path="/{resource_id}/statuses",
+    responses=RESP_GET_RESOURCE_STATUSES,
+)
 async def get_statuses_by_resource(
     resource_id: int,
     db: DBDep,
