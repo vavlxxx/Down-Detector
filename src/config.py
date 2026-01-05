@@ -15,9 +15,9 @@ class TaskiqConfig(BaseModel):
     USE_DELAY_EXPONENT: bool = True
     MAX_DELAY_EXPONENT: int = 120
 
-    UNRELEVANT_STATUS_HOURS: int = 24
-    CRON_CHECK_RESOURCES: CronStr = CronStr("*/1 * * * *")
-    CRON_CHECK_UNRELEVANT_STATUSES: CronStr = CronStr("*/5 * * * *")
+    UNRELEVANT_STATUS_HOURS: int = 12
+    CRON_CHECK_RESOURCES: CronStr = CronStr("*/5 * * * *")
+    CRON_CHECK_UNRELEVANT_STATUSES: CronStr = CronStr("*/10 * * * *")
 
 
 class RedisConfig(BaseModel):

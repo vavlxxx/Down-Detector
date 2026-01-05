@@ -17,6 +17,7 @@ from src.schemas.resoures import (
 )
 from src.services.base import BaseService
 from src.tasks import worker
+from src.utils.antibot import get_fake_random_headers
 from src.utils.exceptions import (
     ObjectNotFoundError,
     ResourceAlreadyExistsError,
@@ -136,9 +137,14 @@ class ResourceService(BaseService):
     ) -> ResourceStatusAddDTO:
         start = time.perf_counter()
         status_code = status.HTTP_418_IM_A_TEAPOT
+        headers = get_fake_random_headers()
 
         try:
-            async with client.get(url=url) as response:
+            async with client.get(
+                url=url,
+                headers=headers,
+                allow_redirects=True,
+            ) as response:
                 status_code = response.status
                 response.raise_for_status()
         except aiohttp.ClientResponseError as exc:

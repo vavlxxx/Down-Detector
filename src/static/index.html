@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DownDetector - Мониторинг доступности сайтов</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+                            <path d="M16 8V16L20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <h1>DownDetector</h1>
+                    </div>
+                    <button class="btn btn-primary" id="addResourceBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Добавить ресурс
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                <!-- Dashboard View -->
+                <div id="dashboardView" class="view">
+                    <div class="view-header">
+                        <h2>Мониторинг ресурсов</h2>
+                        <p class="subtitle">Отслеживайте доступность ваших сайтов в режиме реального времени</p>
+                    </div>
+                    
+                    <div id="resourcesList" class="resources-grid">
+                        <!-- Resources will be loaded here -->
+                    </div>
+
+                    <div id="emptyState" class="empty-state" style="display: none;">
+                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                            <circle cx="60" cy="60" r="50" stroke="currentColor" stroke-width="2" opacity="0.2"/>
+                            <path d="M60 30V70M40 50H80" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                        <h3>Нет добавленных ресурсов</h3>
+                        <p>Добавьте первый ресурс для мониторинга</p>
+                        <button class="btn btn-primary" onclick="showAddResourceModal()">
+                            Добавить ресурс
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Resource Detail View -->
+                <div id="detailView" class="view" style="display: none;">
+                    <button class="btn-back" onclick="showDashboard()">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Назад к списку
+                    </button>
+
+                    <div id="resourceDetail">
+                        <!-- Resource detail will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Resource Modal -->
+    <div id="addResourceModal" class="modal">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить ресурс</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="addResourceForm" class="modal-body">
+                <div class="form-group">
+                    <label for="resourceUrl">URL ресурса</label>
+                    <input 
+                        type="url" 
+                        id="resourceUrl" 
+                        name="url" 
+                        placeholder="https://example.com" 
+                        required
+                        pattern="https?://.+"
+                    >
+                    <small class="form-hint">Введите полный URL включая протокол (http:// или https://)</small>
+                </div>
+                <div id="formError" class="form-error" style="display: none;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-text">Добавить</span>
+                        <span class="btn-loader" style="display: none;">
+                            <svg width="20" height="20" viewBox="0 0 20 20">
+                                <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2" fill="none" opacity="0.3"/>
+                                <path d="M10 2 A8 8 0 0 1 18 10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
+                                    <animateTransform attributeName="transform" type="rotate" from="0 10 10" to="360 10 10" dur="1s" repeatCount="indefinite"/>
+                                </path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-overlay" onclick="closeDeleteModal()"></div>
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3>Удалить ресурс?</h3>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить <strong id="deleteResourceUrl"></strong>?</p>
+                <p class="text-muted">Все данные мониторинга будут удалены безвозвратно.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <svg class="toast-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M6 10L9 13L14 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/components.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

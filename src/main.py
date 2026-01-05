@@ -9,11 +9,13 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, ORJSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.api import router as main_router
 from src.api.docs import router as docs_router
-from src.config import settings
+from src.config import BASE_DIR, settings
 from src.db import engine
 
 # from src.tasks.broker import broker, scheduler
@@ -57,6 +59,22 @@ app = FastAPI(
 )
 app.include_router(main_router)
 app.include_router(docs_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+static_path = BASE_DIR / "src" / "static"
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+
+@app.get("/")
+async def read_root():
+    return FileResponse(static_path / "index.html")
 
 
 if __name__ == "__main__":
