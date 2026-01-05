@@ -1,6 +1,6 @@
 import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import aiohttp
 from fastapi import Request, status
@@ -34,7 +34,9 @@ class ResourceStatusesService(BaseService):
         return await self.db.statuses.get_all_filtered(resource_id=resource_id)
 
     async def delete_unrelevant_statuses(self):
-        threshold = datetime.now() - timedelta(hours=settings.taskiq.UNRELEVANT_STATUS_HOURS)
+        threshold = datetime.now(timezone.utc) - timedelta(
+            hours=settings.taskiq.UNRELEVANT_STATUS_HOURS
+        )
         expression = ResourceStatus.created_at <= threshold
         statuses = await self.db.statuses.get_all_filtered(expression)
         if not statuses:
